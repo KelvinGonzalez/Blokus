@@ -1,8 +1,8 @@
 from board import Board, GridItem
-from user import Player, Color, PieceShard, PlayerPiece
+from enums import Color
+from player import Player
+from player_piece import PlayerPiece, PieceShard
 from piece import pieces, valid_unit
-
-turn_owners = [Color.RED, Color.GREEN, Color.BLUE, Color.YELLOW]
 
 class Move:
     def __init__(self, owner_color: Color, piece_shards: list[PieceShard]):
@@ -14,7 +14,8 @@ class State:
         if board is None:
             board = Board()
         if players is None:
-            players = [Player("Player 1", Color.RED), Player("Player 2", Color.GREEN), Player("Player 3", Color.BLUE), Player("Player 4", Color.YELLOW)]
+            colors = [c for c in Color]
+            players = [Player(f"Player {i+1}", colors[i]) for i in range(len(colors))]
         if moves is None:
             moves = []
         self.board = board
@@ -23,8 +24,8 @@ class State:
         self.turn = turn
         self.pass_counter = pass_counter
 
-    def place_piece(self, player: Player, player_piece: PlayerPiece, position):
-        if player.color != turn_owners[self.turn % len(turn_owners)]:
+    def place_piece(self, player: Player, player_piece: PlayerPiece, position: tuple[int]) -> bool:
+        if player != self.players[self.turn % len(self.players)]:
             return False
         if player_piece not in player.pieces:
             return False
@@ -45,7 +46,7 @@ class State:
         self.turn += 1
         self.pass_counter += 1
 
-    def check_win(self):
+    def check_win(self) -> Player:
         unit_count = [0 for x in self.players]
         for i in range(len(self.players)):
             player = self.players[i]
