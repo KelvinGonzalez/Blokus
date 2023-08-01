@@ -7,10 +7,27 @@ from state import *
 import os
 import math
 
+character_limit = 48
+
 state = State()
 page = "start"
 page_data = {}
 alerts = []
+
+def character_limiter(x, limit, append=""):
+    count = 0
+    i = 0
+    while i < len(x):
+        count += 1
+        if count > limit:
+            if x[i] == " ":
+                x = x[:i] + "\n" + append + x[i+1:]
+                count = len(append)
+                i += count
+        if x[i] == "\n":
+            count = 0
+        i += 1
+    return x
 
 def get_printable_piece(piece: PlayerPiece, color: Color):
     result = []
@@ -40,7 +57,7 @@ def goto(x: int, data: dict=None):
 def display_page():
     player = state.players[state.turn % len(state.players)]
     if page == "start":
-        print("Welcome to Blokus!\n\nPlace your tetrominoes on the board, corner-to-corner, blocking \nyour opponents. Maximize territory to win!\n\nPress enter to start the game.\nType \"help\" after starting to view all commands.\n")
+        print(character_limiter("Welcome to Blokus!\n\nPlace your tetrominoes on the board, corner-to-corner, blocking your opponents. Maximize territory to win!\n\nPress enter to start the game.\nType \"help\" after starting to view all commands.\n", character_limit))
     elif page == "board":
         print(f"Turn #{state.turn+1}: {player.name}'s Turn")
         state.board.print()
@@ -70,7 +87,7 @@ def display_page():
         state.board.print_mock(page_data["piece"].split(page_data["position"]), player.color)
         print("Confirm piece position? (Y/n) ")
     elif page == "help":
-        print("Help:\n"
+        print(character_limiter("Help:\n"
               " -instructions: Show the game's instructions\n"
               " -board: Show the game board\n"
               " -pieces: Show your current pieces\n"
@@ -78,18 +95,18 @@ def display_page():
               " -rotate [+/-]+: Rotate the focused piece\n"
               " -flip [h/v]: Flip the focused piece\n"
               " -place [RowCol]: Place the focused piece\n"
-              " -exit: Exit the game\n")
+              " -exit: Exit the game\n", character_limit, "  "))
     elif page == "instructions":
-        print("Instructions:\n"
+        print(character_limiter("Instructions:\n"
               " 1. Players: Blokus is designed for 2 to 4 players.\n"
               " 2. Board: The game is played on a square grid board with 20x20 cells.\n"
-              " 3. Pieces: Each player has a set of differently shaped and colored pieces\n    called \"tetrominoes\" (Tetris-like shapes).\n"
-              " 4. Objective: The goal is to strategically place your pieces on the board\n    while blocking your opponents, maximizing your territory.\n"
-              " 5. Placing Pieces: Players take turns placing one of their pieces on\n    the board. Pieces must touch their own at a corner but not along edges.\n"
+              " 3. Pieces: Each player has a set of differently shaped and colored pieces called \"tetrominoes\" (Tetris-like shapes).\n"
+              " 4. Objective: The goal is to strategically place your pieces on the board while blocking your opponents, maximizing your territory.\n"
+              " 5. Placing Pieces: Players take turns placing one of their pieces on the board. Pieces must touch their own at a corner but not along edges.\n"
               " 6. Blocking: Pieces cannot touch other players' pieces, except at corners.\n"
-              " 7. Passing: If a player cannot legally place a piece, they must pass\n    their turn.\n"
+              " 7. Passing: If a player cannot legally place a piece, they must pass their turn.\n"
               " 8. End of Game: The game ends when no player can make a legal move.\n"
-              " 9. Scoring: Players count occupied cells; the one with the fewest\n    remaining wins.\n")
+              " 9. Scoring: Players count occupied cells; the one with the fewest remaining wins.\n", character_limit, "    "))
 
 def raise_alert(text: str):
     alerts.append("Alert: " + text)
@@ -98,7 +115,7 @@ while True:
     try:
         player = state.players[state.turn % len(state.players)]
         display_page()
-        command = input("Enter command: ")
+        command = input("Enter command: ").strip()
 
         if page == "start":
             goto("board")  
