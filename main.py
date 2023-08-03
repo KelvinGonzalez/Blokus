@@ -1,11 +1,10 @@
-from enums import *
-from board import *
-from player import *
-from player_piece import *
-from piece import *
-from state import *
+from enums import Color
+from player_piece import PlayerPiece
+from state import State
 import os
 import math
+
+clear = "cls" if os.name == "nt" else "clear"
 
 character_limit = 48
 
@@ -31,7 +30,7 @@ def character_limiter(x, limit, append=""):
 
 def get_printable_piece(piece: PlayerPiece, color: Color):
     result = []
-    for i in range(len(piece.shape)):
+    for i in range(len(piece.shape)):   
         result.append(" ".join([" " if y == 0 else color.value for y in piece.shape[i]]))
     return result
 
@@ -45,7 +44,7 @@ def print_target_piece(piece: PlayerPiece, color: Color):
 def parse_position(position_code):
     if len(position_code) != 2:
         return (-1, -1)
-    return (ord(position_code[0])-ord("A"), ord(position_code[1])-ord("A"))
+    return (ord(position_code[0].upper())-ord("A"), ord(position_code[1].upper())-ord("A"))
 
 def goto(x: int, data: dict=None):
     global page, page_data
@@ -95,12 +94,13 @@ def display_page():
               " -rotate [+/-]+: Rotate the focused piece\n"
               " -flip [h/v]: Flip the focused piece\n"
               " -place [RowCol]: Place the focused piece\n"
+              " -pass: Pass your turn onto the next player\n"
               " -exit: Exit the game\n", character_limit, "  "))
     elif page == "instructions":
         print(character_limiter("Instructions:\n"
-              " 1. Players: Blokus is designed for 2 to 4 players.\n"
+              " 1. Players: Blokus is designed for 4 players.\n"
               " 2. Board: The game is played on a square grid board with 20x20 cells.\n"
-              " 3. Pieces: Each player has a set of differently shaped and colored pieces called \"tetrominoes\" (Tetris-like shapes).\n"
+              " 3. Pieces: Each player has a set of differently shaped and colored pieces called \"tetrominoes\".\n"
               " 4. Objective: The goal is to strategically place your pieces on the board while blocking your opponents, maximizing your territory.\n"
               " 5. Placing Pieces: Players take turns placing one of their pieces on the board. Pieces must touch their own at a corner but not along edges.\n"
               " 6. Blocking: Pieces cannot touch other players' pieces, except at corners.\n"
@@ -115,7 +115,7 @@ while True:
     try:
         player = state.players[state.turn % len(state.players)]
         display_page()
-        command = input("Enter command: ").strip()
+        command = input("Enter command... ").strip()
 
         if page == "start":
             goto("board")  
@@ -171,7 +171,7 @@ while True:
 
         winner = state.check_win()
         if winner is not None:
-            os.system('cls')
+            os.system(clear)
             print(f"{winner.name} has won!")
             state.board.print()
             if input("Would you like to play again? (Y/n) ").upper() == "Y":
@@ -183,7 +183,7 @@ while True:
                 break
     except:
         raise_alert("Error has occurred")
-    os.system('cls')
+    os.system(clear)
     if len(alerts) > 0:
         print("\n".join(alerts))
         alerts.clear()
