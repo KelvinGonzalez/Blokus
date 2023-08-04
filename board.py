@@ -1,7 +1,7 @@
 from enums import Color
 from player_piece import PieceShard
 from player import Player
-
+import numpy as np
 
 class GridItem:
 
@@ -96,13 +96,33 @@ class Board:
     return (is_first_move and is_corner or not is_first_move and touches_corner
             and not touches_side) and not intersects
 
+  def find_possible_corners(self, player: Player):
+    possible_corners =  np.random.rand(Board.grid_size, Board.grid_size) > 1
+    for row in range(Board.grid_size):
+        for col in range(Board.grid_size):
+            free_square =  self.grid_items[row][col] is None
+            same_color_corner = (self.unit_is_color(row + 1, col + 1, player.color)
+                or self.unit_is_color(row - 1, col + 1, player.color)
+                or self.unit_is_color(row + 1, col - 1, player.color)
+                or self.unit_is_color(row - 1, col - 1, player.color))
+            same_color_side = (self.unit_is_color(row + 1, col, player.color)
+                or self.unit_is_color(row - 1, col, player.color)
+                or self.unit_is_color(row, col + 1, player.color)
+                or self.unit_is_color(row, col - 1, player.color))
+            if (free_square and same_color_corner and not same_color_side):
+                for rOff in range(-2,3):
+                    for cOff in range(-2,3):
+                        possible_corners[row+rOff,col+cOff] = True
+    return possible_corners
+                
   def any_valid_move(self, player: Player):
+    possible_corners = self.find_possible_corners(player)
     for piece in player.pieces:
       for a in range(2):
         for b in range(4):
           for i in range(Board.grid_size):
             for j in range(Board.grid_size):
-              if self.validate(piece.split((i, j)), player.color):
+              if possible_corners[i,j] and self.validate(piece.split((i, j)), player.color):
                 return True
           piece.rotate_90()
         piece.flip_horizontal()

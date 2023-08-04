@@ -174,7 +174,7 @@ piece_20 = Piece("2", [
 ])
 
 pieces = [piece_0, piece_1, piece_2, piece_3, piece_4, piece_5, piece_6, piece_7, piece_8, piece_9, piece_10, piece_11, piece_12, piece_13, piece_14, piece_15, piece_16, piece_17, piece_18, piece_19, piece_20]
-
+pieces.sort(key=lambda piece: sum([sum(row) for row in piece.shape]))
 def get_piece(name: str) -> Piece:
     for piece in pieces:
         if piece.name == name:
