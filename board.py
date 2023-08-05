@@ -45,6 +45,20 @@ class Board:
         return True
     return False
 
+  def out_of_bounds_offset(self, piece_shards: list[PieceShard]) -> tuple[int]:
+    offset_i, offset_j = 0, 0
+    for shard in piece_shards:
+      i, j = shard.position[0], shard.position[1]
+      if i < 0:
+        offset_i = min(i, offset_i)
+      elif i >= len(self.grid_items):
+        offset_i = max(i - len(self.grid_items) + 1, offset_i)
+      if j < 0:
+        offset_j = min(j, offset_j)
+      elif j >= len(self.grid_items):
+        offset_j = max(j - len(self.grid_items) + 1, offset_j)
+    return (offset_i, offset_j)
+
   def position_out_of_bounds(self, i: int, j: int) -> bool:
     return i < 0 or j < 0 or i >= len(self.grid_items) or j >= len(
       self.grid_items[0])
@@ -54,11 +68,11 @@ class Board:
       j] is not None and self.grid_items[i][j].owner_color == color
 
   def first_move(self, color: Color) -> bool:
-      for row in self.grid_items:
-        for grid_item in row:
-          if grid_item is not None and grid_item.owner_color == color:
-            return False
-      return True
+    for row in self.grid_items:
+      for grid_item in row:
+        if grid_item is not None and grid_item.owner_color == color:
+          return False
+    return True
 
   def validate(self, piece_shards: list[PieceShard], color: Color) -> bool:
     if self.out_of_bounds(piece_shards):
@@ -113,15 +127,15 @@ class Board:
         if (free_square and same_color_corner and not same_color_side):
           for rOff in range(-2, 3):
             for cOff in range(-2, 3):
-              nRow = min(max(row+rOff,0), Board.grid_size-1)
-              nCol = min(max(col+cOff,0), Board.grid_size-1)
+              nRow = min(max(row + rOff, 0), Board.grid_size - 1)
+              nCol = min(max(col + cOff, 0), Board.grid_size - 1)
               possible_corners[nRow, nCol] = 1
     return possible_corners
 
   def any_valid_move(self, player: Player):
     if self.first_move(player.color):
       return True
-    
+
     possible_corners = self.find_possible_corners(player)
     for piece in player.pieces:
       for a in range(2):

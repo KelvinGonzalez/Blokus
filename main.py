@@ -41,23 +41,6 @@ def get_printable_piece(piece: PlayerPiece, color: Color):
   return result
 
 
-def print_target_piece(piece: PlayerPiece, color: Color):
-  result = "      |    \n"
-  for i in range(len(piece.shape)):
-    result += ("--" if i == 2 else "  ") + " ".join(
-      [" " if y == 0 else color.value
-       for y in piece.shape[i]]) + ("--" if i == 2 else "") + "\n"
-  result += "      |    "
-  print(result)
-
-
-def parse_position(position_code):
-  if len(position_code) != 2:
-    return (-1, -1)
-  return (ord(position_code[0].upper()) - ord("A"),
-          ord(position_code[1].upper()) - ord("A"))
-
-
 def handle_goto_cases():
   player_index = state.turn % len(state.players)
   if state.pass_tracker[player_index] or not state.board.any_valid_move(
@@ -136,24 +119,40 @@ def display_page():
 
   elif page == "menu":
     s = "Menu:\n"
-    for i, action in enumerate(["Continue", "View Instructions", "Exit Game"]):
+    for i, action in enumerate(
+      ["Continue", "View Instructions", "View Help", "Exit Game"]):
       indicator = ">" if page_data["select"] == i else " "
       s += indicator + " " + action + "\n"
     print(s)
 
   elif page == "help":
-    print(
-      character_limiter(
-        "Help:\n"
-        " -instructions: Show the game's instructions\n"
-        " -board: Show the game board\n"
-        " -pieces: Show your current pieces\n"
-        " -piece [x]: Focus on a specific piece\n"
-        " -rotate [+/-]+: Rotate the focused piece\n"
-        " -flip [h/v]: Flip the focused piece\n"
-        " -place [RowCol]: Place the focused piece\n"
-        " -pass: Pass your turn onto the next player\n"
-        " -exit: Exit the game\n", character_limit, "  "))
+    target = page_data["page"]
+    print("Help:")
+    if target == "pieces":
+      print(
+        character_limiter(
+          " -Press WASD to move the cursor\n"
+          " -Press B to view the board\n"
+          " -Press any number to select piece by number\n"
+          " -Press Enter to select the piece\n", character_limit, "  "))
+    elif target == "board":
+      print(
+        character_limiter(" -Press B to go back to your pieces\n",
+                          character_limit, "  "))
+    elif target == "piece":
+      print(
+        character_limiter(
+          " -Press WASD to move the piece\n"
+          " -Press Q/E to rotate the piece\n"
+          " -Press Z to flip the piece vertically\n"
+          " -Press X to flip the piece horizontally\n"
+          " -Press P to view your pieces\n"
+          " -Press < or > to swap the current piece\n"
+          " -Press 1, 2, 3, 4 to position the piece in a quadrant\n"
+          " -Press 0 to reset the piece's position\n"
+          " -Press Enter to place the piece\n", character_limit, "  "))
+    else:
+      pass
 
   elif page == "instructions":
     print(
@@ -201,7 +200,6 @@ while True:
         break
 
     player = state.players[state.turn % len(state.players)]
-
     key = getkey()
 
     if page == "start":
@@ -301,24 +299,28 @@ while True:
         page_data["position"] = positions[int(key) - 1]
       elif key == "q":
         piece.rotate_neg_90()
-        if state.board.out_of_bounds(piece.split(page_data["position"])):
-          piece.rotate_90()
-          raise_alert("Operation cannot be performed")
+        offset = state.board.out_of_bounds_offset(
+          piece.split(page_data["position"]))
+        page_data["position"] = (page_data["position"][0] - offset[0],
+                                 page_data["position"][1] - offset[1])
       elif key == "e":
         piece.rotate_90()
-        if state.board.out_of_bounds(piece.split(page_data["position"])):
-          piece.rotate_neg_90()
-          raise_alert("Operation cannot be performed")
+        offset = state.board.out_of_bounds_offset(
+          piece.split(page_data["position"]))
+        page_data["position"] = (page_data["position"][0] - offset[0],
+                                 page_data["position"][1] - offset[1])
       elif key == "x":
         piece.flip_horizontal()
-        if state.board.out_of_bounds(piece.split(page_data["position"])):
-          piece.flip_horizontal()
-          raise_alert("Operation cannot be performed")
+        offset = state.board.out_of_bounds_offset(
+          piece.split(page_data["position"]))
+        page_data["position"] = (page_data["position"][0] - offset[0],
+                                 page_data["position"][1] - offset[1])
       elif key == "z":
         piece.flip_vertical()
-        if state.board.out_of_bounds(piece.split(page_data["position"])):
-          piece.flip_vertical()
-          raise_alert("Operation cannot be performed")
+        offset = state.board.out_of_bounds_offset(
+          piece.split(page_data["position"]))
+        page_data["position"] = (page_data["position"][0] - offset[0],
+                                 page_data["position"][1] - offset[1])
       elif key == "p":
         goto("pieces", {"index": page_data.get("index"), "num_buffer": ""})
       elif key == keys.LEFT:
@@ -326,11 +328,19 @@ while True:
           page_data["index"] -= 1
         else:
           page_data["index"] = len(player.pieces) - 1
+        offset = state.board.out_of_bounds_offset(
+          player.pieces[page_data["index"]].split(page_data["position"]))
+        page_data["position"] = (page_data["position"][0] - offset[0],
+                                 page_data["position"][1] - offset[1])
       elif key == keys.RIGHT:
         if page_data["index"] < len(player.pieces) - 1:
           page_data["index"] += 1
         else:
           page_data["index"] = 0
+        offset = state.board.out_of_bounds_offset(
+          player.pieces[page_data["index"]].split(page_data["position"]))
+        page_data["position"] = (page_data["position"][0] - offset[0],
+                                 page_data["position"][1] - offset[1])
       elif key == keys.ENTER:
         if state.board.validate(piece.split(page_data["position"]),
                                 player.color):
@@ -345,7 +355,7 @@ while True:
       update_screen()
 
     elif page == "menu":
-      actions = ["continue", "instructions", "exit"]
+      actions = ["continue", "instructions", "help", "exit"]
       if key == "w":
         if page_data["select"] > 0:
           page_data["select"] -= 1
@@ -356,18 +366,11 @@ while True:
         action = actions[page_data["select"]]
         if action == "continue":
           goto(page_data["page"], page_data["data"])
-        elif action == "instructions":
-          goto(
-            "instructions", {
-              "page": page_data["page"],
-              "data": page_data["data"],
-              "select": page_data["select"]
-            })
         elif action == "exit":
           break
         else:
           goto(
-            actions, {
+            action, {
               "page": page_data["page"],
               "data": page_data["data"],
               "select": page_data["select"]
@@ -378,7 +381,7 @@ while True:
         continue
       update_screen()
 
-    elif page == "instructions":
+    elif page == "instructions" or page == "help":
       if key == keys.ESCAPE:
         goto(
           "menu", {
