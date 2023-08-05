@@ -6,10 +6,19 @@ category = "main"
 optional = false
 python-versions = "*"
 
+[[package]]
+name = "numpy"
+version = "1.25.2"
+description = "Fundamental package for array computing in Python"
+category = "main"
+optional = false
+python-versions = ">=3.9"
+
 [metadata]
 lock-version = "1.1"
 python-versions = "^3.10"
-content-hash = "151bcbef66fb3c0a6b28cfaff6a774091810fa21c8368f27a6912acdd12de882"
+content-hash = "d2e1da6dcb8e34e0fc6529a3fd369535662ba3b758e62b7a7b2e466556d3915c"
 
 [metadata.files]
 getkey = []
+numpy = []
