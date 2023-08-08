@@ -2,6 +2,7 @@ from enums import Color
 from player_piece import PlayerPiece
 from state import State
 from board import Board
+from piece import pieces
 from getkey import getkey, keys
 import os
 import math
@@ -15,6 +16,7 @@ state = State()
 page = "start"
 page_data = {}
 alerts = []
+valid_moves = [True for piece in pieces]
 
 
 def character_limiter(x, limit, append=""):
@@ -33,33 +35,44 @@ def character_limiter(x, limit, append=""):
   return x
 
 
-def get_printable_piece(piece: PlayerPiece, color: Color):
+def get_printable_piece(piece: PlayerPiece, color: Color, valid: bool):
   result = []
   for i in range(len(piece.shape)):
-    result.append(" ".join(
-      [" " if y == 0 else color.value for y in piece.shape[i]]))
+    result.append(" ".join([
+      " " if y == 0 else color.value if valid else "X" for y in piece.shape[i]
+    ]))
   return result
 
 
-def handle_goto_cases():
-  player_index = state.turn % len(state.players)
-  if state.pass_tracker[player_index] or not state.board.any_valid_move(
-      state.players[player_index]):
-    state.pass_turn()
-    goto("pieces", {"index": 0, "num_buffer": ""})
-    raise_alert("No valid moves so turn was skipped")
+def handle_goto_flags(flags):
+  if "any_valid_moves" in flags:
+    global valid_moves
+    player_index = state.turn % len(state.players)
+    if state.pass_tracker[player_index]:
+      valid_moves = [False for piece in state.players[player_index].pieces]
+      state.pass_turn()
+      goto("pieces", {"index": 0, "num_buffer": ""}, ["any_valid_moves"])
+      raise_alert("No valid moves so turn was skipped")
+    valid_moves = state.board.any_valid_move(state.players[player_index])
+    if not any(valid_moves):
+      state.pass_turn()
+      goto("pieces", {"index": 0, "num_buffer": ""}, ["any_valid_moves"])
+      raise_alert("No valid moves so turn was skipped")
 
 
-def goto(x: int, data: dict = None):
+def goto(x: int, data: dict = None, flags=None):
   global page, page_data
   if data is None:
     data = {}
+  if flags is None:
+    flags = []
   page = x
   page_data = data
-  handle_goto_cases()
+  handle_goto_flags(flags)
 
 
 def display_page():
+  global valid_moves
   player = state.players[state.turn % len(state.players)]
   if page == "start":
     print(
@@ -76,7 +89,8 @@ def display_page():
     printable_pieces = []
     for i in range(len(player.pieces)):
       piece_num_string = f"Piece #{i+1}"
-      printable_piece = get_printable_piece(player.pieces[i], player.color)
+      printable_piece = get_printable_piece(player.pieces[i], player.color,
+                                            valid_moves[i])
       piece_num_string += " " * (len(printable_piece[0]) -
                                  len(piece_num_string))
       printable_pieces.append([piece_num_string] + printable_piece)
@@ -244,11 +258,14 @@ while True:
           if page_data["num_buffer"] != "":
             page_data["index"] = int(page_data["num_buffer"]) - 1
       elif key == keys.ENTER:
-        goto(
-          "piece", {
-            "index": page_data["index"],
-            "position": (Board.grid_size // 2, Board.grid_size // 2)
-          })
+        if valid_moves[page_data["index"]]:
+          goto(
+            "piece", {
+              "index": page_data["index"],
+              "position": (Board.grid_size // 2, Board.grid_size // 2)
+            })
+        else:
+          raise_alert("No valid moves for this piece")
       elif key == "b":
         goto(
           "board", {
@@ -324,19 +341,25 @@ while True:
       elif key == "p":
         goto("pieces", {"index": page_data.get("index"), "num_buffer": ""})
       elif key == keys.LEFT:
-        if page_data["index"] > 0:
-          page_data["index"] -= 1
-        else:
-          page_data["index"] = len(player.pieces) - 1
+        while True:
+          if page_data["index"] > 0:
+            page_data["index"] -= 1
+          else:
+            page_data["index"] = len(player.pieces) - 1
+          if valid_moves[page_data["index"]]:
+            break
         offset = state.board.out_of_bounds_offset(
           player.pieces[page_data["index"]].split(page_data["position"]))
         page_data["position"] = (page_data["position"][0] - offset[0],
                                  page_data["position"][1] - offset[1])
       elif key == keys.RIGHT:
-        if page_data["index"] < len(player.pieces) - 1:
-          page_data["index"] += 1
-        else:
-          page_data["index"] = 0
+        while True:
+          if page_data["index"] < len(player.pieces) - 1:
+            page_data["index"] += 1
+          else:
+            page_data["index"] = 0
+          if valid_moves[page_data["index"]]:
+            break
         offset = state.board.out_of_bounds_offset(
           player.pieces[page_data["index"]].split(page_data["position"]))
         page_data["position"] = (page_data["position"][0] - offset[0],
@@ -345,7 +368,7 @@ while True:
         if state.board.validate(piece.split(page_data["position"]),
                                 player.color):
           state.place_piece(player, piece, page_data["position"])
-          goto("pieces", {"index": 0, "num_buffer": ""})
+          goto("pieces", {"index": 0, "num_buffer": ""}, ["any_valid_moves"])
         else:
           raise_alert("Piece is in an invalid position")
       elif key == keys.ESCAPE:

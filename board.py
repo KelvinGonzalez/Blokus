@@ -1,5 +1,5 @@
 from enums import Color
-from player_piece import PieceShard
+from player_piece import PlayerPiece, PieceShard
 from player import Player
 import numpy as np
 
@@ -132,19 +132,25 @@ class Board:
               possible_corners[nRow, nCol] = 1
     return possible_corners
 
+  def any_valid_move_piece(self, piece: PlayerPiece, color: Color,
+                           possible_corners):
+    for a in range(2):
+      for b in range(4):
+        for i in range(Board.grid_size):
+          for j in range(Board.grid_size):
+            if possible_corners[i, j] == 1 and self.validate(
+                piece.split((i, j)), color):
+              return True
+        piece.rotate_90()
+      piece.flip_horizontal()
+    return False
+
   def any_valid_move(self, player: Player):
     if self.first_move(player.color):
-      return True
+      return [True for piece in player.pieces]
 
     possible_corners = self.find_possible_corners(player)
-    for piece in player.pieces:
-      for a in range(2):
-        for b in range(4):
-          for i in range(Board.grid_size):
-            for j in range(Board.grid_size):
-              if possible_corners[i, j] == 1 and self.validate(
-                  piece.split((i, j)), player.color):
-                return True
-          piece.rotate_90()
-        piece.flip_horizontal()
-    return False
+    return [
+      self.any_valid_move_piece(piece, player.color, possible_corners)
+      for piece in player.pieces
+    ]
