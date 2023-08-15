@@ -147,7 +147,7 @@ class Board:
 
   def any_valid_move(self, player: Player):
     if self.first_move(player.color):
-      return [True for piece in player.pieces]
+      return [True] * 13 + [False] + [True] * 7
 
     possible_corners = self.find_possible_corners(player)
     return [
