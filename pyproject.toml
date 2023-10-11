@@ -6,8 +6,8 @@ authors = ["Your Name <you@example.com>"]
 
 [tool.poetry.dependencies]
 python = "^3.10"
-getkey = "0.6.5"
 numpy = "^1.25.2"
+get-key = "^1.60.0"
 
 [tool.poetry.dev-dependencies]
 

@@ -17,9 +17,9 @@ app.add_transition(pieces, Transition("a", pieces, pieces_left))
 app.add_transition(pieces, Transition("d", pieces, pieces_right))
 app.add_transition(pieces, Transition("num", pieces, pieces_num))
 app.add_transition(
-  pieces,
-  Transition(keys.ENTER, piece, pieces_enter,
-             condition=pieces_enter_condition))
+    pieces,
+    Transition(keys.ENTER, piece, pieces_enter, condition=pieces_enter_condition),
+)
 app.add_transition(pieces, Transition(keys.BACKSPACE, pieces, pieces_back))
 app.add_transition(pieces, Transition("b", board, pieces_board))
 
@@ -37,6 +37,6 @@ app.add_transition(piece, Transition("z", piece, piece_vertical_flip))
 app.add_transition(piece, Transition(keys.LEFT, piece, piece_left_swap))
 app.add_transition(piece, Transition(keys.RIGHT, piece, piece_right_swap))
 app.add_transition(
-  piece,
-  Transition(keys.ENTER, pieces, piece_enter, condition=piece_enter_condition))
+    piece, Transition(keys.ENTER, pieces, piece_enter, condition=piece_enter_condition)
+)
 app.add_transition(piece, Transition("p", pieces, piece_pieces))
