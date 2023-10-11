@@ -98,7 +98,6 @@ def piece(data):
 def start_enter(data):
   data["index"] = 0
   data["num_buffer"] = ""
-  state = data["state"]
   data["valid_moves"] = [True] * 13 + [False] + [True] * 7
 
 
@@ -316,13 +315,13 @@ def piece_enter(data):
   state.place_piece(player, piece, data["position"])
   data["index"] = 0
   data["num_buffer"] = ""
-  while True:
-    data["valid_moves"] = state.board.any_valid_move(
-      state.players[state.turn % len(state.players)])
+  for x in range(len(state.players)):
+    player = state.players[state.turn % len(state.players)]
+    data["valid_moves"] = state.board.any_valid_move(player)
     if any(data["valid_moves"]):
       break
     state.pass_turn()
-    raise_alert("No valid moves so turn was skipped", data)
+    raise_alert(f"{player.name} has no valid moves", data)
 
 
 def piece_pieces(data):

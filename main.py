@@ -30,7 +30,7 @@ while True:
     state.board.print()
     if input("Would you like to play again? (Y/n) ").upper() == "Y":
       state = State()
-      app.clear()
+      app.reset()
       app.set_key("state", state)
       continue
     else:

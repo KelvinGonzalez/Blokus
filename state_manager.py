@@ -107,6 +107,10 @@ class App:
     self.data.clear()
     return True
 
+  def reset(self):
+    self.current_state = 0
+    self.clear()
+
   def get_current_state(self):
     if self.current_state < 0 or self.current_state >= len(self.states):
       return None
